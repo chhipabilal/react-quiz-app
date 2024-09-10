@@ -1,33 +1,63 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import axios from 'axios'
+import React, { useRef, useState } from 'react'
+import { useEffect } from 'react'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [question, setQuestion] = useState([]);
+  const [questionState , setQuestionState] = useState(0)
+
+  const checkedInput = useRef([]);
+  useEffect(() => {
+    axios("https://the-trivia-api.com/v2/questions")
+      .then((res) => {
+        console.log(res.data)
+        setQuestion(res.data);
+      }).catch((err) => {
+        console.log(err);
+      })
+  }, [])
+
+  //shuffle array
+
+  function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    
+    return array;
+  }
+
+  function nextQuestion (index){
+    const checkedButton = checkedInput.current.find(input => input.checked);
+    if (checkedButton) {
+      const selectedValue = checkedButton.value;
+      console.log("Selected answer:", selectedValue);
+
+    }
+
+
+    questionState < question.length - 1 ? setQuestionState(questionState + 1) : alert("there is no question avaiable")
+
+  }
 
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <h1>Quiz App</h1>
+      {question.length > 0 ? <div>
+        <h1>Q{questionState + 1}: {question[questionState].question.text}</h1>
+        <ul>
+          {shuffleArray([...question[questionState].incorrectAnswers , question[questionState].correctAnswer]).map((item , index)=>{
+            return <li key={index}>
+            <input type="radio" name='choice' id={item} value={item} ref={el => (checkedInput.current[index] = el)}/>
+            <label htmlFor={item}>{item}</label>
+          </li>
+          
+          })}
+        </ul>
+        <button onClick={()=> nextQuestion()}>Next {question.length}</button>
+      </div> : <h1>Loading...</h1>}
     </>
   )
 }
